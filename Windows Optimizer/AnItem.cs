@@ -15,6 +15,9 @@ namespace Windows_Optimizer {
         Func<AnItem, bool> _check;
         Action<AnItem> _ifIncomplete, _ifComplete, _apply;
 
+        internal AnItem() {
+            InitializeComponent();
+        }
         public AnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply) {
             InitializeComponent();
             _check = check;

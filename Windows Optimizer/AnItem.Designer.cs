@@ -55,7 +55,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.pictureBox1);
             this.Name = "AnItem";
-            this.Size = new System.Drawing.Size(200, 20);
+            this.Size = new System.Drawing.Size(171, 20);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

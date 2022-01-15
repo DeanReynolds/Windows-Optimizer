@@ -4,6 +4,7 @@ using System.Diagnostics;
 namespace Windows_Optimizer {
     public partial class Form1 : Form {
         const int ItemsPerRow = 10;
+        readonly int anItemWidth;
 
         readonly List<AnItem> AllTheItems = new();
 
@@ -11,13 +12,14 @@ namespace Windows_Optimizer {
             InitializeComponent();
             AnItem.Check = imageList1.Images["check"];
             AnItem.Warn = imageList1.Images["warn"];
+            anItemWidth = new AnItem().Width;
         }
 
         public void AddAnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply) {
             var anItem = new AnItem(check, ifIncomplete, ifComplete, apply);
             anItem.RunCheck();
             int col = AllTheItems.Count / ItemsPerRow, row = AllTheItems.Count % ItemsPerRow;
-            anItem.Location = new(0 + (col * 220), row * 20);
+            anItem.Location = new(0 + (col * anItemWidth), row * 20);
             AllTheItems.Add(anItem);
             this.Controls.Add(anItem);
         }
@@ -45,10 +47,8 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Game Bar", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\System\GameConfigStore", "GameDVR_Enabled", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -61,9 +61,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Power Throttling", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling", "PowerThrottlingOff", 1, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -77,10 +75,8 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Network Throttling", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex", -1, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -99,7 +95,6 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Enabling Games Scheduling", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Affinity", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Background Only", "False", RegistryValueKind.String);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Clock Rate", 10000, RegistryValueKind.DWord);
@@ -107,7 +102,6 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Priority", 6, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Scheduling Category", "High", RegistryValueKind.String);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority", "High", RegistryValueKind.String);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -126,13 +120,11 @@ namespace Windows_Optimizer {
                 var tempFiles = new List<string>(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Temp"));
                 tempFiles.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp"));
                 me.SetText($"Cleaning {tempFiles.Count:#,##} temp files...", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 foreach (var file in tempFiles) {
                     try {
                         File.Delete(file);
                     } catch { }
                 }
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -145,9 +137,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Sleep", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings", "ShowSleepOption", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -160,9 +150,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Hibernate", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -175,9 +163,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Auto Maintenance", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 1, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -190,9 +176,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Menu Show Delay", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -205,9 +189,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Enabling Classic Context Menu", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "", RegistryValueKind.String);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -220,9 +202,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Background Apps", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 1, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -235,9 +215,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Windows Widgets", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -250,9 +228,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Windows Maps", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\Maps", "AutoUpdateEnabled", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -266,10 +242,8 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Fix Blurry Apps", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop", "EnablePerProcessSystemDPI", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -284,10 +258,8 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling EPP & Setting Mouse 6/11", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSpeed", "0", RegistryValueKind.String);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSensitivity", "10", RegistryValueKind.String);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             var v = RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", "StartMenu_Start_Time", Array.Empty<byte>());
@@ -312,7 +284,6 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Visual Effects", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics", "MinAnimate", "0", RegistryValueKind.String);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "TaskbarAnimations", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\DWM", "EnableAeroPeek", 0, RegistryValueKind.DWord);
@@ -323,7 +294,6 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "FontSmoothing", "2", RegistryValueKind.String);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ListviewShadow", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "UserPreferencesMask", new byte[] { 144, 18, 2, 128, 16, 0, 0, 0 }, RegistryValueKind.Binary);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -336,9 +306,7 @@ namespace Windows_Optimizer {
                 me.GoCheck();
             }, (AnItem me) => {
                 me.SetText("Disabling Hide File Ext", Color.Black, FontStyle.Bold);
-                Thread.Sleep(100);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 0, RegistryValueKind.DWord);
-                Thread.Sleep(100);
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
@@ -444,7 +412,76 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\InputPersonalization\TrainedDataStore", "HarvestContacts", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             });
-            this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * 220, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1;
+            }, (AnItem me) => {
+                me.SetText("Diagnostic Data On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Diagnostic Data Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Diagnostic Data", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 1, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 1) == 0;
+            }, (AnItem me) => {
+                me.SetText("Activity History On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Activity History Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Activity History", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 0) == 1
+                && RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 1) == 0;
+            }, (AnItem me) => {
+                me.SetText("Apps Run in BG On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Apps Run in BG Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Apps Run in BG", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 1, RegistryValueKind.DWord);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 0, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 1) == 0
+                && RegGet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 0) == 1;
+            }, (AnItem me) => {
+                me.SetText("All Icons in Taskbar Off", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"All Icons in Taskbar On", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling All Icons in Taskbar", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 0, RegistryValueKind.DWord);
+                RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 1, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0;
+            }, (AnItem me) => {
+                me.SetText("Recommend Apps On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Recommend Apps Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Recommend Apps", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 0, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 0);
         }
 
