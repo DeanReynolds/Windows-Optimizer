@@ -59,5 +59,35 @@ namespace Windows_Optimizer.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] nv_profile {
+            get {
+                object obj = ResourceManager.GetObject("nv_profile", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] nvidiaProfileInspector {
+            get {
+                object obj = ResourceManager.GetObject("nvidiaProfileInspector", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] powerplan {
+            get {
+                object obj = ResourceManager.GetObject("powerplan", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
