@@ -655,9 +655,8 @@ namespace Windows_Optimizer
                 {
                     files = Directory.GetFiles(path);
                 }
-                catch (Exception)
-                {
-                }
+                catch (Exception) {}
+
                 if (files != null)
                 {
                     for (int i = 0; i < files.Length; i++)
