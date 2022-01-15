@@ -548,6 +548,27 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdate", "Start", 0) == 4
+                && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdatem", "Start", 0) == 4
+                && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\edgeupdate", "Start", 0) == 4
+                && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\edgeupdatem", "Start", 0) == 4
+                && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MozillaMaintenance", "Start", 0) == 4;
+            }, (AnItem me) => {
+                me.SetText("Browser Update Services On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Browser Update Services Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Browser Update Services", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdate", "Start", 4, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdatem", "Start", 4, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\edgeupdate", "Start", 4, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\edgeupdatem", "Start", 4, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MozillaMaintenance", "Start", 4, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
             this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 0);
         }
