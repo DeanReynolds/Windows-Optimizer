@@ -37,6 +37,14 @@ namespace Windows_Optimizer {
         
         public void ImportNIP()
         {
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
+
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                if (!obj["Name"].ToString().Contains("NVIDIA"))
+                    return; // is not an NVIDIA GPU.
+            }
+            
             try
             {
                 File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe"), Properties.Resources.nvidiaProfileInspector);
