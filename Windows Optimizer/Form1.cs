@@ -34,6 +34,64 @@ namespace Windows_Optimizer {
         public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind) {
             Registry.SetValue(key, value, setTo, valueKind);
         }
+        
+        public void ImportNIP()
+        {
+            try
+            {
+                File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe"), Properties.Resources.nvidiaProfileInspector);
+                File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nv_profile.nip"), Properties.Resources.nv_profile);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("NIP Importing failed. Access to the temporary folder was denied.");
+            }
+
+
+            Process p = new Process();
+            p.StartInfo.FileName = $"{Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe")}";
+            p.StartInfo.Arguments = $"-silentImport {Path.Combine(Path.GetTempPath(), "nv_profile.nip")}";
+            p.Start();
+            p.WaitForExit();
+
+            File.Delete(Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe"));
+            File.Delete(Path.Combine(Path.GetTempPath(), "nv_profile.nip"));
+        }
+
+        public void ImportPwrPlan()
+        {
+            try
+            {
+                File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "pwrplan.pow"), Properties.Resources.powerplan);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("Power plan importing failed. Access to the temporary folder was denied.");
+            }
+
+            Process p = new Process();
+            ProcessStartInfo i = new ProcessStartInfo();
+            i.FileName = "cmd.exe";
+            i.RedirectStandardInput = true;
+            i.UseShellExecute = false;
+
+            p.StartInfo = i;
+            p.Start();
+
+            using (StreamWriter sw = p.StandardInput)
+            {
+                if (sw.BaseStream.CanWrite)
+                {
+                    sw.WriteLine("powercfg -delete 77777777-7777-7777-7777-777777777777"); // <-- this is just in case it exists already, it imports it again.
+                    sw.WriteLine($"powercfg -import {Path.Combine(Path.GetTempPath(), "pwrplan.pow")} 77777777-7777-7777-7777-777777777777");
+                    sw.WriteLine("powercfg -SETACTIVE \"77777777-7777-7777-7777-777777777777\"");
+                }
+            }
+
+            p.WaitForExit();
+
+            File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
+        }
 
         private void Form1_Load(object sender, EventArgs e) {
             AddAnItem((AnItem me) => {
