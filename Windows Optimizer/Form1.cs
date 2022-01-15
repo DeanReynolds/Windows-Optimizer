@@ -52,7 +52,7 @@ namespace Windows_Optimizer
             {
                 if (obj["IsActive"].ToString() == "True")
                     Guid.TryParse(obj["InstanceID"].ToString().Substring(21, 36), out plan);
-            }
+            } //also might need future proofing, but for now it's ok
 
             //if the Guid is empty, then an error occured, if not
             //the plan should have a proper Guid.
