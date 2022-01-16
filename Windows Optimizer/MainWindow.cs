@@ -5,14 +5,14 @@ using System.Management;
 
 namespace Windows_Optimizer
 {
-    public partial class Form1 : Form
+    public partial class MainWindow : Form
     {
         const int ItemsPerRow = 12;
         readonly int anItemWidth;
 
         readonly List<AnItem> AllTheItems = new();
 
-        public Form1()
+        public MainWindow()
         {
             InitializeComponent();
             AnItem.Check = imageList1.Images["check"];
@@ -92,6 +92,7 @@ namespace Windows_Optimizer
             Process p = new Process();
             p.StartInfo.FileName = Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe");
             p.StartInfo.Arguments = $"-silentImport {Path.Combine(Path.GetTempPath(), "nv_profile.nip")}";
+
             p.Start();
             p.WaitForExit();
 
@@ -110,26 +111,24 @@ namespace Windows_Optimizer
                 MessageBox.Show("Power plan importing failed. Access to the temporary folder was denied.");
             }
 
-                Process p = new Process();
-                ProcessStartInfo i = new ProcessStartInfo();
-                i.FileName = "cmd.exe";
-                i.RedirectStandardInput = true;
-                i.UseShellExecute = false;
+            Process p = new Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.RedirectStandardInput = true;
+            p.StartInfo.UseShellExecute = false;
 
-                p.StartInfo = i;
-                p.Start();
+            p.Start();
 
-                using (StreamWriter sw = p.StandardInput)
+            using (StreamWriter sw = p.StandardInput)
+            {
+                if (sw.BaseStream.CanWrite)
                 {
-                    if (sw.BaseStream.CanWrite)
-                    {
-                        sw.WriteLine("powercfg -delete 77777777-7777-7777-7777-777777777777"); // <-- this is just in case it exists already, it imports it again.
-                        sw.WriteLine($"powercfg -import {Path.Combine(Path.GetTempPath(), "pwrplan.pow")} 77777777-7777-7777-7777-777777777777");
-                        sw.WriteLine("powercfg -SETACTIVE \"77777777-7777-7777-7777-777777777777\"");
-                    }
+                    sw.WriteLine("powercfg -delete 77777777-7777-7777-7777-777777777777"); // <-- this is just in case it exists already, it imports it again.
+                    sw.WriteLine($"powercfg -import {Path.Combine(Path.GetTempPath(), "pwrplan.pow")} 77777777-7777-7777-7777-777777777777");
+                    sw.WriteLine("powercfg -SETACTIVE \"77777777-7777-7777-7777-777777777777\"");
                 }
+            }
 
-                p.WaitForExit();
+            p.WaitForExit();
 
             File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
         }
@@ -147,14 +146,12 @@ namespace Windows_Optimizer
             }
 
             Process p = new Process();
-            ProcessStartInfo i = new ProcessStartInfo();
-            i.FileName = "cmd.exe";
-            i.RedirectStandardInput = true;
-            i.UseShellExecute = false;
-            i.Verb = "runas";
-            i.WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\");
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.RedirectStandardInput = true;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.Verb = "runas";
+            p.StartInfo.WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\");
 
-            p.StartInfo = i;
             p.Start();
 
             using (StreamWriter sw = p.StandardInput)
@@ -703,7 +700,7 @@ namespace Windows_Optimizer
                 me.SetText("Activating Bitsum Power Plan", Color.Black, FontStyle.Bold);
                 ImportPowerPlan();
                 me.RunCheck();
-            });
+            }, "Installs and activates the \"Bitsum Power Plan\", a superior power plan designed for better performance");
 
             AddAnItem((AnItem me) => {
                 using (TaskService ts = new TaskService())
@@ -733,7 +730,7 @@ namespace Windows_Optimizer
                 // maybe will be replaced soon.
 
                 me.RunCheck();
-            });
+            }, "Installs and runs OpenTimerResolution, which will automatically set\nthe timer resolution to 0.5ms and clean your memory cache automatically in the background");
 
             // NOTE:
             // this is a placeholder until we find a method that can actually verify it properly
@@ -758,7 +755,7 @@ namespace Windows_Optimizer
                     ImportNIP();
                     optimized = true;
                     me.RunCheck();
-                });
+                }, "Optimizes the NVIDIA Settings from your NVIDIA Control Panel (and some hidden ones that you can't see there)");
             }
             this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 6);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 1);
@@ -806,6 +803,21 @@ namespace Windows_Optimizer
                     }
                 }
             }
+        }
+
+        private void tornixLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/TorniX0") { CreateNoWindow = true });
+        }
+
+        private void freethyLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("cmd", $"/c start https://www.youtube.com/c/FR33THY") { CreateNoWindow = true });
+        }
+
+        private void dcrewLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/DeanReynolds") { CreateNoWindow = true });
         }
     }
 }
