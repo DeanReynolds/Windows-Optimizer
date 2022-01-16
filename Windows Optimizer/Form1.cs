@@ -2,21 +2,25 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.Management;
 
-namespace Windows_Optimizer {
-    public partial class Form1 : Form {
+namespace Windows_Optimizer
+{
+    public partial class Form1 : Form
+    {
         const int ItemsPerRow = 10;
         readonly int anItemWidth;
 
         readonly List<AnItem> AllTheItems = new();
 
-        public Form1() {
+        public Form1()
+        {
             InitializeComponent();
             AnItem.Check = imageList1.Images["check"];
             AnItem.Warn = imageList1.Images["warn"];
             anItemWidth = new AnItem().Width;
         }
 
-        public void AddAnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply) {
+        public void AddAnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply)
+        {
             var anItem = new AnItem(check, ifIncomplete, ifComplete, apply);
             anItem.RunCheck();
             int col = AllTheItems.Count / ItemsPerRow, row = AllTheItems.Count % ItemsPerRow;
@@ -25,17 +29,37 @@ namespace Windows_Optimizer {
             this.Controls.Add(anItem);
         }
 
-        public T RegGet<T>(string key, string value, T returnIfError) {
+        public T RegGet<T>(string key, string value, T returnIfError)
+        {
             var reg = Registry.GetValue(key, value, returnIfError);
             if (reg == null)
                 return returnIfError;
             return (T)reg;
         }
 
-        public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind) {
+        public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind)
+        {
             Registry.SetValue(key, value, setTo, valueKind);
         }
-        
+
+        public Guid GetActivePowerPlan()
+        {
+            Guid plan = Guid.Empty;
+
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\cimv2\\power", "SELECT * FROM Win32_PowerPlan");
+
+            foreach (ManagementObject obj in searcher.Get())
+            {
+                if (obj["IsActive"].ToString() == "True")
+                    Guid.TryParse(obj["InstanceID"].ToString().Substring(21, 36), out plan);
+            } //also might need future proofing, but for now it's ok
+
+            //if the Guid is empty, then an error occured, if not
+            //the plan should have a proper Guid.
+
+            return plan;
+        }
+
         public void ImportNIP()
         {
             ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
@@ -45,7 +69,7 @@ namespace Windows_Optimizer {
                 if (!obj["Name"].ToString().Contains("NVIDIA"))
                     return; // is not an NVIDIA GPU.
             }
-            
+
             try
             {
                 File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe"), Properties.Resources.nvidiaProfileInspector);
@@ -67,7 +91,7 @@ namespace Windows_Optimizer {
             File.Delete(Path.Combine(Path.GetTempPath(), "nv_profile.nip"));
         }
 
-        public void ImportPwrPlan()
+        public void ImportPowerPlan()
         {
             try
             {
@@ -102,7 +126,8 @@ namespace Windows_Optimizer {
             File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
         }
 
-        private void Form1_Load(object sender, EventArgs e) {
+        private void Form1_Load(object sender, EventArgs e)
+        {
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\System\GameConfigStore", "GameDVR_Enabled", 1) == 0
                 && RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 1) == 0;
@@ -187,10 +212,13 @@ namespace Windows_Optimizer {
                 var tempFiles = new List<string>(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Temp"));
                 tempFiles.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp"));
                 me.SetText($"Cleaning {tempFiles.Count:#,##} temp files...", Color.Black, FontStyle.Bold);
-                foreach (var file in tempFiles) {
-                    try {
+                foreach (var file in tempFiles)
+                {
+                    try
+                    {
                         File.Delete(file);
-                    } catch { }
+                    }
+                    catch { }
                 }
                 me.RunCheck();
             });
@@ -569,34 +597,70 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MozillaMaintenance", "Start", 4, RegistryValueKind.DWord);
                 me.RunCheck();
             });
+            AddAnItem((AnItem me) => {
+                return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 0) == 1;
+            }, (AnItem me) => {
+                me.SetText("Automatic Windows Updates On", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Automatic Windows Updates Off", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Disabling Automatic Windows Updates", Color.Black, FontStyle.Bold);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, RegistryValueKind.DWord);
+                me.RunCheck();
+            });
+            AddAnItem((AnItem me) => {
+                return GetActivePowerPlan() == new Guid("77777777-7777-7777-7777-777777777777");
+            }, (AnItem me) => {
+                me.SetText("Power Plan Inactive", Color.DimGray, FontStyle.Regular);
+                me.GoWarn();
+            }, (AnItem me) => {
+                me.SetText($"Power Plan Active", Color.DimGray, FontStyle.Regular);
+                me.GoCheck();
+            }, (AnItem me) => {
+                me.SetText("Activating Power Plan", Color.Black, FontStyle.Bold);
+                ImportPowerPlan();
+                me.RunCheck();
+            });
             this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 0);
         }
 
-        private void btnStart_Click(object sender, EventArgs e) {
+        private void btnStart_Click(object sender, EventArgs e)
+        {
             foreach (var item in AllTheItems)
                 if (!item.RunCheck())
                     item.Apply();
         }
 
-        static IEnumerable<string> GetFiles(string path) {
+        static IEnumerable<string> GetFiles(string path)
+        {
             Queue<string> queue = new Queue<string>();
             queue.Enqueue(path);
-            while (queue.Count > 0) {
+            while (queue.Count > 0)
+            {
                 path = queue.Dequeue();
-                try {
+                try
+                {
                     foreach (string subDir in Directory.GetDirectories(path))
                         queue.Enqueue(subDir);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex)
+                {
                     Console.Error.WriteLine(ex);
                 }
                 string[]? files = null;
-                try {
+                try
+                {
                     files = Directory.GetFiles(path);
-                } catch (Exception) {
                 }
-                if (files != null) {
-                    for (int i = 0; i < files.Length; i++) {
+                catch (Exception) {}
+
+                if (files != null)
+                {
+                    for (int i = 0; i < files.Length; i++)
+                    {
                         yield return files[i];
                     }
                 }
