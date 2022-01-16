@@ -758,9 +758,9 @@ namespace Windows_Optimizer
                     ImportNIP();
                     optimized = true;
                     me.RunCheck();
-                }, "Installs and activates the \"Bitsum Power Plan\", a power plan designed for optimal performance for gaming\nand deletes the other plans to avoid auto reverting");
+                });
             }
-            this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
+            this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 6);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 1);
             panel1.Location = new(btnStart.Right + 3, btnStart.Top - 1);
         }
