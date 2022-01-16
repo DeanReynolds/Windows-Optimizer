@@ -711,20 +711,6 @@ namespace Windows_Optimizer
             });
 
             AddAnItem((AnItem me) => {
-                return GetActivePowerPlan() == new Guid("77777777-7777-7777-7777-777777777777");
-            }, (AnItem me) => {
-                me.SetText("Power Plan Inactive", Color.DimGray, FontStyle.Regular);
-                me.GoWarn();
-            }, (AnItem me) => {
-                me.SetText($"Power Plan Active", Color.DimGray, FontStyle.Regular);
-                me.GoCheck();
-            }, (AnItem me) => {
-                me.SetText("Activating Power Plan", Color.Black, FontStyle.Bold);
-                ImportPowerPlan();
-                me.RunCheck();
-            });
-
-            AddAnItem((AnItem me) => {
                 using (TaskService ts = new TaskService())
                 {
                     return ts.RootFolder.AllTasks.Any(t => t.Name == "OpenTimerRes");
