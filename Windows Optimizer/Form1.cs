@@ -6,7 +6,7 @@ namespace Windows_Optimizer
 {
     public partial class Form1 : Form
     {
-        const int ItemsPerRow = 10;
+        const int ItemsPerRow = 12;
         readonly int anItemWidth;
 
         readonly List<AnItem> AllTheItems = new();
