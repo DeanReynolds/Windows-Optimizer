@@ -196,26 +196,36 @@ namespace Windows_Optimizer
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
-                var tempFiles = GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Temp").Count()
-                    + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp").Count();
+                var tempFiles = GetFiles(Path.GetTempPath(), false).Count()
+                    + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false).Count();
                 return tempFiles <= 0;
             }, (AnItem me) => {
-                var tempFiles = GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Temp").Count()
-                    + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp").Count();
+                var tempFiles = GetFiles(Path.GetTempPath(), false).Count()
+                    + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false).Count();
                 me.SetText(tempFiles.ToString("#,## temp files"), Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
             }, (AnItem me) => {
                 me.SetText("No temp files", Color.DimGray, FontStyle.Regular);
                 me.GoCheck();
             }, (AnItem me) => {
-                var tempFiles = new List<string>(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}\Temp"));
-                tempFiles.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp"));
+                var tempFiles = new List<string>(GetFiles(Path.GetTempPath(), false));
+                var tempFolders = new List<string>(GetFiles(Path.GetTempPath(), true));
+                tempFiles.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false));
+                tempFolders.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", true));
                 me.SetText($"Cleaning {tempFiles.Count:#,##} temp files...", Color.Black, FontStyle.Bold);
                 foreach (var file in tempFiles)
                 {
                     try
                     {
                         File.Delete(file);
+                    }
+                    catch { }
+                }
+                foreach (var folder in tempFolders)
+                {
+                    try
+                    {
+                        Directory.Delete(folder);
                     }
                     catch { }
                 }
@@ -633,7 +643,7 @@ namespace Windows_Optimizer
                     item.Apply();
         }
 
-        static IEnumerable<string> GetFiles(string path)
+        static IEnumerable<string> GetFiles(string path, bool directories)
         {
             Queue<string> queue = new Queue<string>();
             queue.Enqueue(path);
@@ -652,7 +662,10 @@ namespace Windows_Optimizer
                 string[]? files = null;
                 try
                 {
-                    files = Directory.GetFiles(path);
+                    if (directories)
+                        files = Directory.GetDirectories(path);
+                    else
+                        files = Directory.GetFiles(path);
                 }
                 catch (Exception) {}
 
