@@ -507,7 +507,8 @@ namespace Windows_Optimizer
                 me.RunCheck();
             }, "Disables some privacy-breaching features of windows");
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 1) == 0;
             }, (AnItem me) => {
                 me.SetText("Diagnostic Data On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -517,6 +518,7 @@ namespace Windows_Optimizer
             }, (AnItem me) => {
                 me.SetText("Disabling Diagnostic Data", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 1, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Disables windows diagnostic data reporting and telemetry");
             AddAnItem((AnItem me) => {
@@ -563,7 +565,8 @@ namespace Windows_Optimizer
                 me.RunCheck();
             });
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 0) == 1;
             }, (AnItem me) => {
                 me.SetText("Recommend Apps On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -573,6 +576,7 @@ namespace Windows_Optimizer
             }, (AnItem me) => {
                 me.SetText("Disabling Recommend Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 0, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 1, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Disables automatic recommended apps");
             AddAnItem((AnItem me) => {
