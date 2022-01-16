@@ -19,9 +19,8 @@ namespace Windows_Optimizer
             anItemWidth = new AnItem().Width;
         }
 
-        public void AddAnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply)
-        {
-            var anItem = new AnItem(check, ifIncomplete, ifComplete, apply);
+        public void AddAnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply, string tooltip = "") {
+            var anItem = new AnItem(check, ifIncomplete, ifComplete, apply, tooltip);
             anItem.RunCheck();
             int col = AllTheItems.Count / ItemsPerRow, row = AllTheItems.Count % ItemsPerRow;
             anItem.Location = new(0 + (col * anItemWidth), row * 20);
@@ -142,7 +141,7 @@ namespace Windows_Optimizer
                 RegSet(@"HKEY_CURRENT_USER\System\GameConfigStore", "GameDVR_Enabled", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Turns off Xbox Game Bar");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling", "PowerThrottlingOff", 1) == 1;
             }, (AnItem me) => {
@@ -630,7 +629,7 @@ namespace Windows_Optimizer
         private void btnStart_Click(object sender, EventArgs e)
         {
             foreach (var item in AllTheItems)
-                if (!item.RunCheck())
+                if (item.IsChecked && !item.RunCheck())
                     item.Apply();
         }
 

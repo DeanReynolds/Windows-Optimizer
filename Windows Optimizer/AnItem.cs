@@ -18,13 +18,17 @@ namespace Windows_Optimizer {
         internal AnItem() {
             InitializeComponent();
         }
-        public AnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply) {
+        public AnItem(Func<AnItem, bool> check, Action<AnItem> ifIncomplete, Action<AnItem> ifComplete, Action<AnItem> apply, string tooltip = "") {
             InitializeComponent();
             _check = check;
             _ifIncomplete = ifIncomplete;
             _ifComplete = ifComplete;
             _apply = apply;
+            toolTip1.SetToolTip(this, tooltip);
+            toolTip1.SetToolTip(label1, tooltip);
         }
+
+        public bool IsChecked => checkBox1.Checked;
 
         public void SetText(string text, Color color, FontStyle style) {
             label1.Text = text;
