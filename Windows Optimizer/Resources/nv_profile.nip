@@ -71,21 +71,15 @@
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
+        <SettingNameInfo>NVIDIA Predefined Ansel Usage</SettingNameInfo>
+        <SettingID>271965065</SettingID>
+        <SettingValue>0</SettingValue>
+        <ValueType>Dword</ValueType>
+      </ProfileSetting>
+      <ProfileSetting>
         <SettingNameInfo>Power management mode</SettingNameInfo>
         <SettingID>274197361</SettingID>
         <SettingValue>1</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
-        <SettingNameInfo>Enable Ansel</SettingNameInfo>
-        <SettingID>276158834</SettingID>
-        <SettingValue>0</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
-        <SettingNameInfo>Antialiasing - Gamma correction</SettingNameInfo>
-        <SettingID>276652957</SettingID>
-        <SettingValue>0</SettingValue>
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
@@ -101,12 +95,6 @@
         <ValueType>Dword</ValueType>
       </ProfileSetting>
       <ProfileSetting>
-        <SettingNameInfo>Antialiasing - Setting</SettingNameInfo>
-        <SettingID>282555346</SettingID>
-        <SettingValue>0</SettingValue>
-        <ValueType>Dword</ValueType>
-      </ProfileSetting>
-      <ProfileSetting>
         <SettingNameInfo>Threaded optimization</SettingNameInfo>
         <SettingID>549528094</SettingID>
         <SettingValue>1</SettingValue>
@@ -115,7 +103,7 @@
       <ProfileSetting>
         <SettingNameInfo>Preferred OpenGL GPU</SettingNameInfo>
         <SettingID>550564838</SettingID>
-        <SettingValue>id,2.0:220410DE,00000100,GF - (368,2,161,24576) @ (0)</SettingValue>
+        <SettingValue>id,2.0:250310DE,00000500,GF - (368,6,161,12288) @ (0)</SettingValue>
         <ValueType>String</ValueType>
       </ProfileSetting>
       <ProfileSetting>

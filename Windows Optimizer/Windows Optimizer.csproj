@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.Management" Version="6.0.0" />
+    <PackageReference Include="TaskScheduler" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

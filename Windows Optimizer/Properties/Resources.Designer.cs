@@ -83,6 +83,16 @@ namespace Windows_Optimizer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] OpenTimerResolution {
+            get {
+                object obj = ResourceManager.GetObject("OpenTimerResolution", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] powerplan {
             get {
                 object obj = ResourceManager.GetObject("powerplan", resourceCulture);
