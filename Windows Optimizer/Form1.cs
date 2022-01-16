@@ -242,8 +242,7 @@ namespace Windows_Optimizer
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Scheduling Category", "High", RegistryValueKind.String);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority", "High", RegistryValueKind.String);
                 me.RunCheck();
-            });
-
+            }, "Sets some global games' properties to make them more stable");
             AddAnItem((AnItem me) => {
                 var tempFiles = GetFiles(Path.GetTempPath(), false).Count()
                     + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false).Count();
@@ -279,8 +278,7 @@ namespace Windows_Optimizer
                     catch { }
                 }
                 me.RunCheck();
-            });
-
+            }, "Tries to delete all temp files from multiple windows directories");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings", "ShowSleepOption", 1) == 0;
             }, (AnItem me) => {
@@ -293,8 +291,7 @@ namespace Windows_Optimizer
                 me.SetText("Disabling Sleep", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings", "ShowSleepOption", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Hides the Sleep option from the start menu");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 1) == 0;
             }, (AnItem me) => {
@@ -307,10 +304,9 @@ namespace Windows_Optimizer
                 me.SetText("Disabling Hibernate", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Hides the Hibernate option from the start menu");
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 0) == 1;
+            return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 0) == 1;
             }, (AnItem me) => {
                 me.SetText("Auto Maintenance On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -584,10 +580,10 @@ namespace Windows_Optimizer
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language", "Enabled", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\InputPersonalization\TrainedDataStore", "HarvestContacts", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Disables some privacy-breaching features of windows");
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 1) == 0;
             }, (AnItem me) => {
                 me.SetText("Diagnostic Data On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -597,9 +593,9 @@ namespace Windows_Optimizer
             }, (AnItem me) => {
                 me.SetText("Disabling Diagnostic Data", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 1, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Disables windows diagnostic data reporting and telemetry");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 1) == 0;
             }, (AnItem me) => {
@@ -647,7 +643,8 @@ namespace Windows_Optimizer
             });
 
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 0) == 1;
             }, (AnItem me) => {
                 me.SetText("Recommend Apps On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -657,9 +654,9 @@ namespace Windows_Optimizer
             }, (AnItem me) => {
                 me.SetText("Disabling Recommend Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 0, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Disables automatic recommended apps");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdate", "Start", 0) == 4
                 && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdatem", "Start", 0) == 4
@@ -680,32 +677,30 @@ namespace Windows_Optimizer
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\edgeupdatem", "Start", 4, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MozillaMaintenance", "Start", 4, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Disables automatic browser updates/maintenance (Edge, Firefox)");
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 0) == 1;
             }, (AnItem me) => {
-                me.SetText("Automatic Windows Updates On", Color.DimGray, FontStyle.Regular);
+                me.SetText("Auto Windows Updates On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
             }, (AnItem me) => {
-                me.SetText($"Automatic Windows Updates Off", Color.DimGray, FontStyle.Regular);
+                me.SetText($"Auto Windows Updates Off", Color.DimGray, FontStyle.Regular);
                 me.GoCheck();
             }, (AnItem me) => {
-                me.SetText("Disabling Automatic Windows Updates", Color.Black, FontStyle.Bold);
+                me.SetText("Disabling Auto Windows Updates", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Disables automatic windows updates");
             AddAnItem((AnItem me) => {
                 return GetActivePowerPlan() == new Guid("77777777-7777-7777-7777-777777777777");
             }, (AnItem me) => {
-                me.SetText("Power Plan Inactive", Color.DimGray, FontStyle.Regular);
+                me.SetText("Bitsum Power Plan Inactive", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
             }, (AnItem me) => {
-                me.SetText($"Power Plan Active", Color.DimGray, FontStyle.Regular);
+                me.SetText($"Bitsum Power Plan Active", Color.DimGray, FontStyle.Regular);
                 me.GoCheck();
             }, (AnItem me) => {
-                me.SetText("Activating Power Plan", Color.Black, FontStyle.Bold);
+                me.SetText("Activating Bitsum Power Plan", Color.Black, FontStyle.Bold);
                 ImportPowerPlan();
                 me.RunCheck();
             });
@@ -763,11 +758,11 @@ namespace Windows_Optimizer
                     ImportNIP();
                     optimized = true;
                     me.RunCheck();
-                });
+                }, "Installs and activates the \"Bitsum Power Plan\", a power plan designed for optimal performance for gaming\nand deletes the other plans to avoid auto reverting");
             }
-
             this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 5);
-            btnStart.Location = new(5, (ItemsPerRow * 20) + 0);
+            btnStart.Location = new(5, (ItemsPerRow * 20) + 1);
+            panel1.Location = new(btnStart.Right + 3, btnStart.Top - 1);
         }
 
         private void btnStart_Click(object sender, EventArgs e)
