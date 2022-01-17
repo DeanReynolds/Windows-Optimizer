@@ -30,6 +30,11 @@ namespace Windows_Optimizer {
 
         public bool IsChecked => checkBox1.Checked;
 
+        public void SetChecked(bool check)
+        {
+            checkBox1.Checked = check;
+        }
+
         public void SetText(string text, Color color, FontStyle style) {
             label1.Text = text;
             label1.ForeColor = color;
