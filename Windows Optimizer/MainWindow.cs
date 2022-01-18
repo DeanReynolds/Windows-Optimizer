@@ -2,18 +2,17 @@ using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Management;
+using System.Net;
 
-namespace Windows_Optimizer
-{
-    public partial class MainWindow : Form
-    {
+namespace Windows_Optimizer {
+    public partial class MainWindow : Form {
+        const int Version = 0;
         const int ItemsPerRow = 12;
         readonly int anItemWidth;
 
         readonly List<AnItem> AllTheItems = new();
 
-        public MainWindow()
-        {
+        public MainWindow() {
             InitializeComponent();
             AnItem.Check = imageList1.Images["check"];
             AnItem.Warn = imageList1.Images["warn"];
@@ -29,27 +28,23 @@ namespace Windows_Optimizer
             this.Controls.Add(anItem);
         }
 
-        public T RegGet<T>(string key, string value, T returnIfError)
-        {
+        public T RegGet<T>(string key, string value, T returnIfError) {
             var reg = Registry.GetValue(key, value, returnIfError);
             if (reg == null)
                 return returnIfError;
             return (T)reg;
         }
 
-        public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind)
-        {
+        public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind) {
             Registry.SetValue(key, value, setTo, valueKind);
         }
 
-        public Guid GetActivePowerPlan()
-        {
+        public Guid GetActivePowerPlan() {
             Guid plan = Guid.Empty;
 
             ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\cimv2\\power", "SELECT * FROM Win32_PowerPlan");
 
-            foreach (ManagementObject obj in searcher.Get())
-            {
+            foreach (ManagementObject obj in searcher.Get()) {
                 if (obj["IsActive"].ToString() == "True")
                     Guid.TryParse(obj["InstanceID"].ToString().Substring(21, 36), out plan);
             } //also might need future proofing, but for now it's ok
@@ -60,12 +55,10 @@ namespace Windows_Optimizer
             return plan;
         }
 
-        public bool isNvidia()
-        {
+        public bool isNvidia() {
             ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
 
-            foreach (ManagementObject obj in searcher.Get())
-            {
+            foreach (ManagementObject obj in searcher.Get()) {
                 if (obj["Name"].ToString().Contains("NVIDIA"))
                     return true;
             }
@@ -73,18 +66,14 @@ namespace Windows_Optimizer
             return false;
         }
 
-        public void ImportNIP()
-        {
+        public void ImportNIP() {
             if (!isNvidia())
                 return;
 
-            try
-            {
+            try {
                 File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nvidiaProfileInspector.exe"), Properties.Resources.nvidiaProfileInspector);
                 File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "nv_profile.nip"), Properties.Resources.nv_profile);
-            }
-            catch (UnauthorizedAccessException)
-            {
+            } catch (UnauthorizedAccessException) {
                 MessageBox.Show("NIP Importing failed. Access to the temporary folder was denied.");
             }
 
@@ -100,14 +89,10 @@ namespace Windows_Optimizer
             File.Delete(Path.Combine(Path.GetTempPath(), "nv_profile.nip"));
         }
 
-        public void ImportPowerPlan()
-        {
-            try
-            {
+        public void ImportPowerPlan() {
+            try {
                 File.WriteAllBytes(Path.Combine(Path.GetTempPath(), "pwrplan.pow"), Properties.Resources.powerplan);
-            }
-            catch (UnauthorizedAccessException)
-            {
+            } catch (UnauthorizedAccessException) {
                 MessageBox.Show("Power plan importing failed. Access to the temporary folder was denied.");
             }
 
@@ -118,10 +103,8 @@ namespace Windows_Optimizer
 
             p.Start();
 
-            using (StreamWriter sw = p.StandardInput)
-            {
-                if (sw.BaseStream.CanWrite)
-                {
+            using (StreamWriter sw = p.StandardInput) {
+                if (sw.BaseStream.CanWrite) {
                     sw.WriteLine("powercfg -delete 77777777-7777-7777-7777-777777777777"); // <-- this is just in case it exists already, it imports it again.
                     sw.WriteLine($"powercfg -import {Path.Combine(Path.GetTempPath(), "pwrplan.pow")} 77777777-7777-7777-7777-777777777777");
                     sw.WriteLine("powercfg -SETACTIVE \"77777777-7777-7777-7777-777777777777\"");
@@ -133,15 +116,11 @@ namespace Windows_Optimizer
             File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
         }
 
-        public void InstallOTR()
-        {
-            try
-            {
+        public void InstallOTR() {
+            try {
                 Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution"));
                 File.WriteAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\OpenTimerResolution.exe"), Properties.Resources.OpenTimerResolution);
-            }
-            catch (UnauthorizedAccessException)
-            {
+            } catch (UnauthorizedAccessException) {
                 MessageBox.Show("Installing OpenTimerRes failed. Access to the temporary folder was denied.");
             }
 
@@ -154,10 +133,8 @@ namespace Windows_Optimizer
 
             p.Start();
 
-            using (StreamWriter sw = p.StandardInput)
-            {
-                if (sw.BaseStream.CanWrite)
-                {
+            using (StreamWriter sw = p.StandardInput) {
+                if (sw.BaseStream.CanWrite) {
                     sw.WriteLine($@"OpenTimerResolution.exe -silentInstall");
                 }
             }
@@ -167,8 +144,20 @@ namespace Windows_Optimizer
             p.WaitForExit();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
+        private void Form1_Load(object sender, EventArgs e) {
+            using WebClient wc = new();
+            int latestVersion = int.Parse(wc.DownloadString(new System.Uri("https://dl.dropboxusercontent.com/s/duw3e0b7bx3c8zx/version")));
+            Debug.WriteLine($"{latestVersion} - {Version}");
+            Console.WriteLine($"{latestVersion} - {Version}");
+            try {
+                if (latestVersion > Version) {
+                    Process p = new();
+                    p.StartInfo.FileName = Path.Combine(Environment.CurrentDirectory, "WO Updater.exe");
+                    p.Start();
+                    Application.Exit();
+                }
+            } catch { }
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\System\GameConfigStore", "GameDVR_Enabled", 1) == 0
                 && RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR", "AppCaptureEnabled", 1) == 0;
@@ -258,21 +247,15 @@ namespace Windows_Optimizer
                 tempFiles.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false));
                 tempFolders.AddRange(GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", true));
                 me.SetText($"Cleaning {tempFiles.Count:#,##} temp files...", Color.Black, FontStyle.Bold);
-                foreach (var file in tempFiles)
-                {
-                    try
-                    {
+                foreach (var file in tempFiles) {
+                    try {
                         File.Delete(file);
-                    }
-                    catch { }
+                    } catch { }
                 }
-                foreach (var folder in tempFolders)
-                {
-                    try
-                    {
+                foreach (var folder in tempFolders) {
+                    try {
                         Directory.Delete(folder);
-                    }
-                    catch { }
+                    } catch { }
                 }
                 me.RunCheck();
             }, "Tries to delete all temp files from multiple windows directories");
@@ -303,7 +286,7 @@ namespace Windows_Optimizer
                 me.RunCheck();
             }, "Hides the Hibernate option from the start menu");
             AddAnItem((AnItem me) => {
-            return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 0) == 1;
+                return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 0) == 1;
             }, (AnItem me) => {
                 me.SetText("Auto Maintenance On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -418,10 +401,6 @@ namespace Windows_Optimizer
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSensitivity", "10", RegistryValueKind.String);
                 me.RunCheck();
             });
-
-            var v = RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", "StartMenu_Start_Time", Array.Empty<byte>());
-            for (int i = 0; i < v.Length; i++)
-                Debug.WriteLine(v[i]);
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics", "MinAnimate", "") == "0"
@@ -703,8 +682,7 @@ namespace Windows_Optimizer
             }, "Installs and activates the \"Bitsum Power Plan\", a superior power plan designed for better performance");
 
             AddAnItem((AnItem me) => {
-                using (TaskService ts = new TaskService())
-                {
+                using (TaskService ts = new TaskService()) {
                     return ts.RootFolder.AllTasks.Any(t => t.Name == "OpenTimerRes");
                 }
             }, (AnItem me) => {
@@ -718,10 +696,8 @@ namespace Windows_Optimizer
 
                 InstallOTR();
 
-                using (TaskService ts = new TaskService())
-                {
-                    while (!ts.RootFolder.AllTasks.Any(t => t.Name == "OpenTimerRes"))
-                    {
+                using (TaskService ts = new TaskService()) {
+                    while (!ts.RootFolder.AllTasks.Any(t => t.Name == "OpenTimerRes")) {
                         if (ts.RootFolder.AllTasks.Any(t => t.Name == "OpenTimerRes"))
                             break;
                     }
@@ -735,22 +711,17 @@ namespace Windows_Optimizer
             // NOTE:
             // this is a placeholder until we find a method that can actually verify it properly
 
-            if (isNvidia())
-            {
+            if (isNvidia()) {
                 bool optimized = false;
-                AddAnItem((AnItem me) =>
-                {
+                AddAnItem((AnItem me) => {
                     return optimized == true;
-                }, (AnItem me) =>
-                {
+                }, (AnItem me) => {
                     me.SetText("NVIDIA Settings Unoptimized", Color.DimGray, FontStyle.Regular);
                     me.GoWarn();
-                }, (AnItem me) =>
-                {
+                }, (AnItem me) => {
                     me.SetText($"NVIDIA Settings Optimized", Color.DimGray, FontStyle.Regular);
                     me.GoCheck();
-                }, (AnItem me) =>
-                {
+                }, (AnItem me) => {
                     me.SetText("Optimizing NVIDIA Settings", Color.Black, FontStyle.Bold);
                     ImportNIP();
                     optimized = true;
@@ -762,61 +733,48 @@ namespace Windows_Optimizer
             panel1.Location = new(btnStart.Right + 3, btnStart.Top - 1);
         }
 
-        private void btnStart_Click(object sender, EventArgs e)
-        {
+        private void btnStart_Click(object sender, EventArgs e) {
             foreach (var item in AllTheItems)
                 if (item.IsChecked && !item.RunCheck())
                     item.Apply();
         }
 
-        static IEnumerable<string> GetFiles(string path, bool directories)
-        {
+        static IEnumerable<string> GetFiles(string path, bool directories) {
             Queue<string> queue = new Queue<string>();
             queue.Enqueue(path);
-            while (queue.Count > 0)
-            {
+            while (queue.Count > 0) {
                 path = queue.Dequeue();
-                try
-                {
+                try {
                     foreach (string subDir in Directory.GetDirectories(path))
                         queue.Enqueue(subDir);
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     Console.Error.WriteLine(ex);
                 }
                 string[]? files = null;
-                try
-                {
+                try {
                     if (directories)
                         files = Directory.GetDirectories(path);
                     else
                         files = Directory.GetFiles(path);
-                }
-                catch (Exception) {}
+                } catch (Exception) { }
 
-                if (files != null)
-                {
-                    for (int i = 0; i < files.Length; i++)
-                    {
+                if (files != null) {
+                    for (int i = 0; i < files.Length; i++) {
                         yield return files[i];
                     }
                 }
             }
         }
 
-        private void tornixLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
+        private void tornixLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
             Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/TorniX0") { CreateNoWindow = true });
         }
 
-        private void freethyLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
+        private void freethyLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
             Process.Start(new ProcessStartInfo("cmd", $"/c start https://www.youtube.com/c/FR33THY") { CreateNoWindow = true });
         }
 
-        private void dcrewLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
+        private void dcrewLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
             Process.Start(new ProcessStartInfo("cmd", $"/c start https://github.com/DeanReynolds") { CreateNoWindow = true });
         }
     }

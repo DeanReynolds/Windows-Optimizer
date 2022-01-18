@@ -28,6 +28,7 @@
             this.btnStart = new System.Windows.Forms.Button();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.panel1 = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
             this.dcrewLabel = new System.Windows.Forms.LinkLabel();
             this.freethyLabel = new System.Windows.Forms.LinkLabel();
             this.tornixLabel = new System.Windows.Forms.LinkLabel();
@@ -62,6 +63,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.dcrewLabel);
             this.panel1.Controls.Add(this.freethyLabel);
             this.panel1.Controls.Add(this.tornixLabel);
@@ -74,6 +76,16 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(531, 34);
             this.panel1.TabIndex = 2;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.label3.Location = new System.Drawing.Point(260, 10);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(75, 15);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "v1.1-alpha.0";
             // 
             // dcrewLabel
             // 
@@ -93,7 +105,7 @@
             this.freethyLabel.BackColor = System.Drawing.Color.Transparent;
             this.freethyLabel.Location = new System.Drawing.Point(473, 18);
             this.freethyLabel.Name = "freethyLabel";
-            this.freethyLabel.Size = new System.Drawing.Size(55, 15);
+            this.freethyLabel.Size = new System.Drawing.Size(54, 15);
             this.freethyLabel.TabIndex = 8;
             this.freethyLabel.TabStop = true;
             this.freethyLabel.Text = "FR33THY";
@@ -105,7 +117,7 @@
             this.tornixLabel.BackColor = System.Drawing.Color.Transparent;
             this.tornixLabel.Location = new System.Drawing.Point(404, 18);
             this.tornixLabel.Name = "tornixLabel";
-            this.tornixLabel.Size = new System.Drawing.Size(41, 15);
+            this.tornixLabel.Size = new System.Drawing.Size(40, 15);
             this.tornixLabel.TabIndex = 3;
             this.tornixLabel.TabStop = true;
             this.tornixLabel.Text = "TorniX";
@@ -149,7 +161,7 @@
             this.label2.ForeColor = System.Drawing.Color.DimGray;
             this.label2.Location = new System.Drawing.Point(0, 15);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(195, 15);
+            this.label2.Size = new System.Drawing.Size(196, 15);
             this.label2.TabIndex = 1;
             this.label2.Text = "Uncheck an item to ignore/not fix it";
             // 
@@ -199,5 +211,6 @@
         private LinkLabel dcrewLabel;
         private LinkLabel freethyLabel;
         private LinkLabel tornixLabel;
+        private Label label3;
     }
 }
