@@ -1,7 +1,11 @@
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Management;
+using System.Net;
+using System.Net.Http.Headers;
+using Task = System.Threading.Tasks.Task;
 
 namespace Windows_Optimizer
 {
@@ -40,6 +44,20 @@ namespace Windows_Optimizer
         public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind)
         {
             Registry.SetValue(key, value, setTo, valueKind);
+        }
+
+        public string GetRequest(string uri, bool jsonaccept)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(uri);
+
+            if (jsonaccept)
+                client.DefaultRequestHeaders
+                      .Accept
+                      .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var res = client.GetStringAsync(uri).Result;
+            return res;
         }
 
         public Guid GetActivePowerPlan()
@@ -134,12 +152,51 @@ namespace Windows_Optimizer
             File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
         }
 
+        public static async Task DownloadAsync(Uri requestUri, string filename)
+        {
+            HttpClient client = new HttpClient();
+
+            using (var s = await client.GetStreamAsync(requestUri))
+            {
+                using (var fs = new FileStream(filename, FileMode.Create))
+                {
+                    await s.CopyToAsync(fs);
+                }
+            }
+        }
+
+        public static Task DownloadSync(string requestUri, string filename)
+        {
+            if (requestUri == null)
+                throw new ArgumentNullException("requestUri");
+
+            return DownloadAsync(new Uri(requestUri), filename);
+        }
+
         public void InstallOTR()
         {
+            string json = GetRequest("https://github.com/TorniX0/OpenTimerResolution/releases/latest", true);
+            var obj = JObject.Parse(json);
+            string ver = string.Empty;
+
+            DialogResult msgbox = MessageBox.Show("Do you want the self-contained version? (with the built-in framework)", "Windows Optimizer", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            switch (msgbox)
+            {
+                case DialogResult.Yes:
+                    ver = "OpenTimerResolution_s";
+                    break;
+                case DialogResult.No:
+                    ver = "OpenTimerResolution";
+                    break;
+            }
+
+            string url = $"https://github.com/TorniX0/OpenTimerResolution/releases/download/{(string)obj["tag_name"]}/{ver}.exe";
+
             try
             {
                 Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution"));
-                File.WriteAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\OpenTimerResolution.exe"), Properties.Resources.OpenTimerResolution);
+                Task.Run(() => DownloadSync(url, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\OpenTimerResolution.exe"))).GetAwaiter().GetResult();
             }
             catch (UnauthorizedAccessException)
             {
