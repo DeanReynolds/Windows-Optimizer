@@ -1,8 +1,11 @@
 using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Management;
 using System.Net;
+using System.Net.Http.Headers;
+using Task = System.Threading.Tasks.Task;
 
 namespace Windows_Optimizer {
     public partial class MainWindow : Form {
@@ -37,6 +40,19 @@ namespace Windows_Optimizer {
 
         public void RegSet<T>(string key, string value, T setTo, RegistryValueKind valueKind) {
             Registry.SetValue(key, value, setTo, valueKind);
+        }
+
+        public string GetRequest(string uri, bool jsonaccept) {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(uri);
+
+            if (jsonaccept)
+                client.DefaultRequestHeaders
+                      .Accept
+                      .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var res = client.GetStringAsync(uri).Result;
+            return res;
         }
 
         public Guid GetActivePowerPlan() {
@@ -100,6 +116,7 @@ namespace Windows_Optimizer {
             p.StartInfo.FileName = "cmd.exe";
             p.StartInfo.RedirectStandardInput = true;
             p.StartInfo.UseShellExecute = false;
+            p.StartInfo.CreateNoWindow = true;
 
             p.Start();
 
@@ -116,10 +133,44 @@ namespace Windows_Optimizer {
             File.Delete(Path.Combine(Path.GetTempPath(), "pwrplan.pow"));
         }
 
+        public static async Task DownloadAsync(Uri requestUri, string filename) {
+            HttpClient client = new HttpClient();
+
+            using (var s = await client.GetStreamAsync(requestUri)) {
+                using (var fs = new FileStream(filename, FileMode.Create)) {
+                    await s.CopyToAsync(fs);
+                }
+            }
+        }
+
+        public static Task DownloadSync(string requestUri, string filename) {
+            if (requestUri == null)
+                throw new ArgumentNullException("requestUri");
+
+            return DownloadAsync(new Uri(requestUri), filename);
+        }
+
         public void InstallOTR() {
+            string json = GetRequest("https://github.com/TorniX0/OpenTimerResolution/releases/latest", true);
+            var obj = JObject.Parse(json);
+            string ver = string.Empty;
+
+            DialogResult msgbox = MessageBox.Show("Do you want the self-contained version? (with the built-in framework)", "Windows Optimizer", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            switch (msgbox) {
+                case DialogResult.Yes:
+                    ver = "OpenTimerResolution_s";
+                    break;
+                case DialogResult.No:
+                    ver = "OpenTimerResolution";
+                    break;
+            }
+
+            string url = $"https://github.com/TorniX0/OpenTimerResolution/releases/download/{(string)obj["tag_name"]}/{ver}.exe";
+
             try {
                 Directory.CreateDirectory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution"));
-                File.WriteAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\OpenTimerResolution.exe"), Properties.Resources.OpenTimerResolution);
+                Task.Run(() => DownloadSync(url, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\OpenTimerResolution.exe"))).GetAwaiter().GetResult();
             } catch (UnauthorizedAccessException) {
                 MessageBox.Show("Installing OpenTimerRes failed. Access to the temporary folder was denied.");
             }
@@ -130,6 +181,7 @@ namespace Windows_Optimizer {
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.Verb = "runas";
             p.StartInfo.WorkingDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"OpenTimerResolution\");
+            p.StartInfo.CreateNoWindow = true;
 
             p.Start();
 
@@ -146,10 +198,8 @@ namespace Windows_Optimizer {
 
         private void Form1_Load(object sender, EventArgs e) {
             using WebClient wc = new();
-            int latestVersion = int.Parse(wc.DownloadString(new System.Uri("https://dl.dropboxusercontent.com/s/duw3e0b7bx3c8zx/version")));
-            Debug.WriteLine($"{latestVersion} - {Version}");
-            Console.WriteLine($"{latestVersion} - {Version}");
             try {
+                int latestVersion = int.Parse(wc.DownloadString(new System.Uri("https://dl.dropboxusercontent.com/s/duw3e0b7bx3c8zx/version")));
                 if (latestVersion > Version) {
                     Process p = new();
                     p.StartInfo.FileName = Path.Combine(Environment.CurrentDirectory, "WO Updater.exe");
@@ -370,8 +420,7 @@ namespace Windows_Optimizer {
             });
 
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 1) == 0
-                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop", "EnablePerProcessSystemDPI", 1) == 0;
+                return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 1) == 0;
             }, (AnItem me) => {
                 me.SetText("Fix Blurry Apps On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -381,7 +430,6 @@ namespace Windows_Optimizer {
             }, (AnItem me) => {
                 me.SetText("Disabling Fix Blurry Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 0, RegistryValueKind.DWord);
-                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop", "EnablePerProcessSystemDPI", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             });
 
@@ -620,7 +668,7 @@ namespace Windows_Optimizer {
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0
-                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 0) == 1;
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent", "DisableWindowsConsumerFeatures", 0) == 1;
             }, (AnItem me) => {
                 me.SetText("Recommend Apps On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -630,9 +678,10 @@ namespace Windows_Optimizer {
             }, (AnItem me) => {
                 me.SetText("Disabling Recommend Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 0, RegistryValueKind.DWord);
-                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Cloud Content", "DisableWindowsConsumerFeatures", 1, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\CloudContent", "DisableWindowsConsumerFeatures", 1, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Disables automatic recommended apps");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdate", "Start", 0) == 4
                 && RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\gupdatem", "Start", 0) == 4
@@ -654,6 +703,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\MozillaMaintenance", "Start", 4, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Disables automatic browser updates/maintenance (Edge, Firefox)");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 0) == 1;
             }, (AnItem me) => {
@@ -667,6 +717,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Disables automatic windows updates");
+
             AddAnItem((AnItem me) => {
                 return GetActivePowerPlan() == new Guid("77777777-7777-7777-7777-777777777777");
             }, (AnItem me) => {
@@ -730,13 +781,21 @@ namespace Windows_Optimizer {
             }
             this.Size = new((((AllTheItems.Count - 1) / ItemsPerRow) + 1) * anItemWidth + 20, (ItemsPerRow * 20) + 39 + btnStart.Size.Height + 6);
             btnStart.Location = new(5, (ItemsPerRow * 20) + 1);
-            panel1.Location = new(btnStart.Right + 3, btnStart.Top - 1);
+            btnUncheck.Location = new(btnStart.Right + 3, btnStart.Top);
+            panel1.Location = new(btnUncheck.Right + 3, btnUncheck.Top);
+            panel2.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
         }
 
         private void btnStart_Click(object sender, EventArgs e) {
             foreach (var item in AllTheItems)
                 if (item.IsChecked && !item.RunCheck())
                     item.Apply();
+        }
+
+        private void btnUncheck_Click(object sender, EventArgs e) {
+            foreach (var item in AllTheItems)
+                if (item.IsChecked)
+                    item.SetChecked(false);
         }
 
         static IEnumerable<string> GetFiles(string path, bool directories) {
