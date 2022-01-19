@@ -9,7 +9,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Windows_Optimizer {
     public partial class MainWindow : Form {
-        const int Version = 0;
+        const int Version = 1;
         const int ItemsPerRow = 12;
         readonly int anItemWidth;
 
@@ -279,6 +279,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority", "High", RegistryValueKind.String);
                 me.RunCheck();
             }, "Sets some global games' properties to make them more stable");
+
             AddAnItem((AnItem me) => {
                 var tempFiles = GetFiles(Path.GetTempPath(), false).Count()
                     + GetFiles($@"{Environment.GetFolderPath(Environment.SpecialFolder.Windows)}\Temp", false).Count();
@@ -309,6 +310,7 @@ namespace Windows_Optimizer {
                 }
                 me.RunCheck();
             }, "Tries to delete all temp files from multiple windows directories");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings", "ShowSleepOption", 1) == 0;
             }, (AnItem me) => {
@@ -322,6 +324,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings", "ShowSleepOption", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Hides the Sleep option from the start menu");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 1) == 0;
             }, (AnItem me) => {
@@ -335,6 +338,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled", 0, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Hides the Hibernate option from the start menu");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 0) == 1;
             }, (AnItem me) => {
@@ -347,8 +351,8 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Auto Maintenance", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
-
+            }, "Removes the Windows automatic maintenance schedule");
+            
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "") == "0";
             }, (AnItem me) => {
@@ -361,7 +365,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Menu Show Delay", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String);
                 me.RunCheck();
-            });
+            }, "Disable the Windows 11 half-second~ context menu open delay");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "0") == "";
@@ -375,10 +379,11 @@ namespace Windows_Optimizer {
                 me.SetText("Enabling Classic Context Menu", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "", RegistryValueKind.String);
                 me.RunCheck();
-            });
+            }, "Restores the Windows 10 context (right-click) menu");
 
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 0) == 1;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 0) == 1
+                && RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 1) == 0;
             }, (AnItem me) => {
                 me.SetText("Background Apps On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -388,8 +393,9 @@ namespace Windows_Optimizer {
             }, (AnItem me) => {
                 me.SetText("Disabling Background Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 1, RegistryValueKind.DWord);
+                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables apps from running in the background");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 1) == 0;
@@ -403,7 +409,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Windows Widgets", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Dsh", "AllowNewsAndInterests", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows widgets such as News & Interests");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SYSTEM\Maps", "AutoUpdateEnabled", 1) == 0;
@@ -417,7 +423,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Windows Maps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SYSTEM\Maps", "AutoUpdateEnabled", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables automatic Windows maps updating");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 1) == 0;
@@ -431,7 +437,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Fix Blurry Apps", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "EnablePerProcessSystemDPI", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows' \"Fix Blurry Apps\" feature");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSpeed", "") == "0"
@@ -448,7 +454,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSpeed", "0", RegistryValueKind.String);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Mouse", "MouseSensitivity", "10", RegistryValueKind.String);
                 me.RunCheck();
-            });
+            }, "Disables enhanced pointer precision (mouse acceleration) and sets mouse sensivity to 6/11 (1.0 scaling)");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop\WindowMetrics", "MinAnimate", "") == "0"
@@ -480,7 +486,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ListviewShadow", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "UserPreferencesMask", new byte[] { 144, 18, 2, 128, 16, 0, 0, 0 }, RegistryValueKind.Binary);
                 me.RunCheck();
-            });
+            }, "Disables a bunch of Windows' visual effects to enhance performance");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 1) == 0;
@@ -494,7 +500,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Hide File Ext", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "HideFileExt", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows' \"Hide Extensions for known file-types\"");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCortanaButton", 1) == 0
@@ -510,7 +516,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCortanaButton", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCortana", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Cortana from being shown and disallows the search policy");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "DisableWebSearch", 0) == 1;
@@ -524,7 +530,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Web Search", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "DisableWebSearch", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows' from using the web (Bing) during search");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 1) == 0;
@@ -538,7 +544,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Transparency Effects", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize", "EnableTransparency", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows' \"Transparency Effects\" to maximize performance");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings", "SafeSearchMode", 1) == 0;
@@ -552,7 +558,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Safe Search", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings", "SafeSearchMode", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables parental/safe search moderation");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\Windows Search", "AllowCloudSearch", 1) == 0;
@@ -569,7 +575,8 @@ namespace Windows_Optimizer {
             });
 
             AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "DeviceHistoryEnabled", 1) == 0;
+                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "DeviceHistoryEnabled", 1) == 0
+                && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 1) == 0;
             }, (AnItem me) => {
                 me.SetText("Device History On", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -579,8 +586,9 @@ namespace Windows_Optimizer {
             }, (AnItem me) => {
                 me.SetText("Disabling Device History", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "DeviceHistoryEnabled", 0, RegistryValueKind.DWord);
+                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Disables Windows from logging and reporting search telemetry");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Control Panel\International\User Profile", "HttpAcceptLanguageOptOut", 0) == 1
@@ -604,7 +612,8 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language", "Enabled", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\InputPersonalization\TrainedDataStore", "HarvestContacts", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            }, "Disables some privacy-breaching features of windows");
+            }, "Disables some privacy-breaching features of Windows");
+
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 0) == 1
                 && RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 1) == 0;
@@ -619,36 +628,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Diagnostics\DiagTrack", "ShowedToastAtLevel", 1, RegistryValueKind.DWord);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\DataCollection", "AllowTelemetry", 0, RegistryValueKind.DWord);
                 me.RunCheck();
-            }, "Disables windows diagnostic data reporting and telemetry");
-            AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 1) == 0;
-            }, (AnItem me) => {
-                me.SetText("Activity History On", Color.DimGray, FontStyle.Regular);
-                me.GoWarn();
-            }, (AnItem me) => {
-                me.SetText($"Activity History Off", Color.DimGray, FontStyle.Regular);
-                me.GoCheck();
-            }, (AnItem me) => {
-                me.SetText("Disabling Activity History", Color.Black, FontStyle.Bold);
-                RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System", "PublishUserActivities", 0, RegistryValueKind.DWord);
-                me.RunCheck();
-            });
-
-            AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 0) == 1
-                && RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 1) == 0;
-            }, (AnItem me) => {
-                me.SetText("Apps Run in BG On", Color.DimGray, FontStyle.Regular);
-                me.GoWarn();
-            }, (AnItem me) => {
-                me.SetText($"Apps Run in BG Off", Color.DimGray, FontStyle.Regular);
-                me.GoCheck();
-            }, (AnItem me) => {
-                me.SetText("Disabling Apps Run in BG", Color.Black, FontStyle.Bold);
-                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 1, RegistryValueKind.DWord);
-                RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search", "BackgroundAppGlobalToggle", 0, RegistryValueKind.DWord);
-                me.RunCheck();
-            });
+            }, "Disables Windows' diagnostic data reporting and telemetry");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 1) == 0
@@ -664,7 +644,7 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 0, RegistryValueKind.DWord);
                 RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            });
+            }, "Makes all icons in the taskbar always visible (no <)");
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\PenWorkspace", "PenWorkspaceAppSuggestionsEnabled", 1) == 0
@@ -716,7 +696,7 @@ namespace Windows_Optimizer {
                 me.SetText("Disabling Auto Windows Updates", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU", "NoAutoUpdate", 1, RegistryValueKind.DWord);
                 me.RunCheck();
-            }, "Disables automatic windows updates");
+            }, "Disables automatic Windows updates");
 
             AddAnItem((AnItem me) => {
                 return GetActivePowerPlan() == new Guid("77777777-7777-7777-7777-777777777777");

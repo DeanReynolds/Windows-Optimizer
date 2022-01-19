@@ -78,11 +78,11 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.label3.Location = new System.Drawing.Point(205, 15);
+            this.label3.Location = new System.Drawing.Point(237, 15);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(75, 15);
+            this.label3.Size = new System.Drawing.Size(41, 15);
             this.label3.TabIndex = 10;
-            this.label3.Text = "v1.1-alpha.0";
+            this.label3.Text = "v1.1.1";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // label2
