@@ -9,7 +9,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Windows_Optimizer {
     public partial class MainWindow : Form {
-        const int Version = 1;
+        const int Version = 2;
         const int ItemsPerRow = 12;
         readonly int anItemWidth;
 
@@ -352,34 +352,36 @@ namespace Windows_Optimizer {
                 RegSet(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\Maintenance", "MaintenanceDisabled", 1, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Removes the Windows automatic maintenance schedule");
-            
-            AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "") == "0";
-            }, (AnItem me) => {
-                me.SetText("Menu Show Delay On", Color.DimGray, FontStyle.Regular);
-                me.GoWarn();
-            }, (AnItem me) => {
-                me.SetText("Menu Show Delay Off", Color.DimGray, FontStyle.Regular);
-                me.GoCheck();
-            }, (AnItem me) => {
-                me.SetText("Disabling Menu Show Delay", Color.Black, FontStyle.Bold);
-                RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String);
-                me.RunCheck();
-            }, "Disable the Windows 11 half-second~ context menu open delay");
 
-            AddAnItem((AnItem me) => {
-                return RegGet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "0") == "";
-            }, (AnItem me) => {
-                me.SetText("Classic Context Menu Off", Color.DimGray, FontStyle.Regular);
-                me.GoWarn();
-            }, (AnItem me) => {
-                me.SetText("Classic Context Menu On", Color.DimGray, FontStyle.Regular);
-                me.GoCheck();
-            }, (AnItem me) => {
-                me.SetText("Enabling Classic Context Menu", Color.Black, FontStyle.Bold);
-                RegSet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "", RegistryValueKind.String);
-                me.RunCheck();
-            }, "Restores the Windows 10 context (right-click) menu");
+            if (IsWin11) {
+                AddAnItem((AnItem me) => {
+                    return RegGet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "") == "0";
+                }, (AnItem me) => {
+                    me.SetText("Menu Show Delay On", Color.DimGray, FontStyle.Regular);
+                    me.GoWarn();
+                }, (AnItem me) => {
+                    me.SetText("Menu Show Delay Off", Color.DimGray, FontStyle.Regular);
+                    me.GoCheck();
+                }, (AnItem me) => {
+                    me.SetText("Disabling Menu Show Delay", Color.Black, FontStyle.Bold);
+                    RegSet(@"HKEY_CURRENT_USER\Control Panel\Desktop", "MenuShowDelay", "0", RegistryValueKind.String);
+                    me.RunCheck();
+                }, "Disable the Windows 11 half-second~ context menu open delay");
+
+                AddAnItem((AnItem me) => {
+                    return RegGet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "0") == "";
+                }, (AnItem me) => {
+                    me.SetText("Classic Context Menu Off", Color.DimGray, FontStyle.Regular);
+                    me.GoWarn();
+                }, (AnItem me) => {
+                    me.SetText("Classic Context Menu On", Color.DimGray, FontStyle.Regular);
+                    me.GoCheck();
+                }, (AnItem me) => {
+                    me.SetText("Enabling Classic Context Menu", Color.Black, FontStyle.Bold);
+                    RegSet(@"HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "", "", RegistryValueKind.String);
+                    me.RunCheck();
+                }, "Restores the Windows 10 context (right-click) menu");
+            }
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications", "GlobalUserDisabled", 0) == 1
@@ -632,7 +634,7 @@ namespace Windows_Optimizer {
 
             AddAnItem((AnItem me) => {
                 return RegGet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 1) == 0
-                && RegGet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 0) == 1;
+                && (IsWin11 || RegGet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 0) == 1);
             }, (AnItem me) => {
                 me.SetText("All Icons in Taskbar Off", Color.DimGray, FontStyle.Regular);
                 me.GoWarn();
@@ -642,7 +644,8 @@ namespace Windows_Optimizer {
             }, (AnItem me) => {
                 me.SetText("Disabling All Icons in Taskbar", Color.Black, FontStyle.Bold);
                 RegSet(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer", "EnableAutoTray", 0, RegistryValueKind.DWord);
-                RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 1, RegistryValueKind.DWord);
+                if (!IsWin11)
+                    RegSet(@"HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer", "DisableNotificationCenter", 1, RegistryValueKind.DWord);
                 me.RunCheck();
             }, "Makes all icons in the taskbar always visible (no <)");
 
@@ -764,6 +767,19 @@ namespace Windows_Optimizer {
             btnUncheck.Location = new(btnStart.Right + 3, btnStart.Top);
             panel1.Location = new(btnUncheck.Right + 3, btnUncheck.Top);
             panel2.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+        }
+
+        static bool IsWin11 {
+            get {
+                try {
+                    var reg = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion");
+                    var currentBuildStr = (string)reg.GetValue("CurrentBuild");
+                    var currentBuild = int.Parse(currentBuildStr);
+                    return currentBuild >= 22000;
+                } catch { return false; }
+
+                return Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Build >= 22000;
+            }
         }
 
         private void btnStart_Click(object sender, EventArgs e) {
